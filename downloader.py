@@ -86,7 +86,7 @@ def format_filesize(size_bytes: Optional[int]) -> str:
         size_bytes /= 1024.0
     return f"{size_bytes:.1f} TB"
 
-def get_video_info(url: str) -> Dict[str, Any]:
+def get_video_info(url: str, cookie_file: Optional[str] = None) -> Dict[str, Any]:
     """Fetches video metadata without downloading."""
     ffmpeg_dir = get_ffmpeg_directory()
     ydl_opts: Dict[str, Any] = {
@@ -104,6 +104,11 @@ def get_video_info(url: str) -> Dict[str, Any]:
             }
         },
     }
+    if cookie_file and os.path.exists(cookie_file):
+        ydl_opts['cookiefile'] = cookie_file
+    elif os.path.exists("cookies.txt"):
+        ydl_opts['cookiefile'] = "cookies.txt"
+
     if ffmpeg_dir:
         ydl_opts['ffmpeg_location'] = ffmpeg_dir
 
@@ -188,6 +193,7 @@ def download_media(
     progress_callback: Optional[Callable[[Dict[str, Any]], None]] = None,
     start_time: Optional[str] = None,
     end_time: Optional[str] = None,
+    cookie_file: Optional[str] = None,
 ) -> Dict[str, Any]:
     """
     Downloads the YouTube media as MP3 or MP4 with highest quality.
@@ -282,11 +288,28 @@ def download_media(
     ydl_opts['js_runtimes'] = {'node': {}, 'deno': {}, 'quickjs': {}}
     ydl_opts['remote_components'] = ['ejs:github']
     ydl_opts['nocheckcertificate'] = True
-    ydl_opts['extractor_args'] = {
-        'youtube': {
-            'player_client': ['android'],
+
+    if cookie_file and os.path.exists(cookie_file):
+        ydl_opts['cookiefile'] = cookie_file
+        # When cookies are present, default client works with high quality formats
+        ydl_opts['extractor_args'] = {
+            'youtube': {
+                'player_client': ['default', 'android'],
+            }
         }
-    }
+    elif os.path.exists("cookies.txt"):
+        ydl_opts['cookiefile'] = "cookies.txt"
+        ydl_opts['extractor_args'] = {
+            'youtube': {
+                'player_client': ['default', 'android'],
+            }
+        }
+    else:
+        ydl_opts['extractor_args'] = {
+            'youtube': {
+                'player_client': ['android'],
+            }
+        }
 
     # Section / Range Download Handling
     has_cut = False

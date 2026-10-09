@@ -561,6 +561,39 @@ if "download_result" not in st.session_state:
 if "history" not in st.session_state:
     st.session_state.history = []
 
+# Sidebar Settings for Cloud & Cookies
+with st.sidebar:
+    st.markdown("### ⚙️ Bulut Sunucu & Çerez Ayarları")
+    st.markdown("""
+    YouTube, bulut sunucu IP adreslerinden (Streamlit Cloud / AWS) gelen indirmeleri bot koruması gerekçesiyle engellemektedir (`403 Forbidden`).
+    """)
+    cookie_upload = st.file_uploader(
+        "🍪 YouTube Çerez Dosyası (cookies.txt)",
+        type=["txt"],
+        help="Tarayıcınızdan aldığınız cookies.txt dosyasını buraya yükleyerek bulut sitesinde engelleri aşabilirsiniz."
+    )
+    if cookie_upload is not None:
+        try:
+            with open("cookies.txt", "wb") as f:
+                f.write(cookie_upload.getbuffer())
+            st.success("✅ Çerezler kaydedildi! İndirmeyi tekrar deneyebilirsiniz.")
+        except Exception as ce:
+            st.error(f"Çerez kaydedilemedi: {ce}")
+    elif os.path.exists("cookies.txt"):
+        st.info("🍪 Aktif çerez dosyası kullanımda.")
+        if st.button("🗑️ Çerezleri Sil"):
+            try:
+                os.remove("cookies.txt")
+                st.rerun()
+            except Exception:
+                pass
+
+    st.markdown("---")
+    st.markdown("""
+    💡 **Kesin ve Engelsiz Çözüm:**  
+    Bilgisayarınızda **`YouTubeIndirici.exe`** masaüstü programını çalıştırarak sıfır engelle ve maksimum hızda indirebilirsiniz. Ev internetiniz YouTube tarafından asla engellenmez!
+    """)
+
 # Hero Header
 st.markdown("""
 <div class="hero-container">
@@ -753,6 +786,7 @@ if st.session_state.video_info:
 
             try:
                 with st.spinner("İşlem yürütülüyor..."):
+                    cookie_f = "cookies.txt" if os.path.exists("cookies.txt") else None
                     result = downloader.download_media(
                         url=st.session_state.current_url,
                         download_mode=mode_key,
@@ -760,6 +794,7 @@ if st.session_state.video_info:
                         progress_callback=progress_callback,
                         start_time=start_time_val.strip() if (cut_section and start_time_val.strip()) else None,
                         end_time=end_time_val.strip() if (cut_section and end_time_val.strip()) else None,
+                        cookie_file=cookie_f,
                     )
                 
                 progress_bar.progress(100, text="Tamamlandı! 🎉")
@@ -778,7 +813,20 @@ if st.session_state.video_info:
                 progress_bar.empty()
                 metrics_placeholder.empty()
                 status_box.empty()
-                st.error(f"❌ İndirme sırasında bir hata oluştu: {str(e)}")
+                err_msg = str(e)
+                st.error(f"❌ İndirme sırasında bir hata oluştu: {err_msg}")
+                if "403" in err_msg or "Forbidden" in err_msg or "available" in err_msg:
+                    st.info("""
+                    **💡 Bu Hatanın Sebebi ve Çözümü:**
+                    
+                    Bu web sitesi bulut sunucusunda (Streamlit Cloud / AWS) barındırılmaktadır. YouTube, ticari veri merkezi (AWS) IP'lerinden gelen video indirme akışlarını küresel telif/bot koruması gerekçesiyle engellemektedir (`HTTP Error 403: Forbidden`).
+                    
+                    **🚀 2 Çözüm Yolu:**
+                    1. **🖥️ Masaüstü Programı (%100 Sorunsuz & Engelsiz):**
+                       Bilgisayarınızdaki **`YouTubeIndirici.exe`** (veya `baslat.bat`) programını açın. Masaüstü programı kendi ev/ofis internet bağlantınızı kullandığı için YouTube tarafından **ASLA engellenmez** ve anında en yüksek kalitede indirir!
+                    2. **🍪 Web Sitesinde Çerez Kullanma:**
+                       Tarayıcınızdan alacağınız ücretsiz `cookies.txt` dosyasını sol taraftaki menüden yükleyerek bulut sitesinde de YouTube bot korumasını aşabilirsiniz.
+                    """)
 
 # ========================================================
 # SLEEK SHADED SUCCESS CARD CONTAINER
