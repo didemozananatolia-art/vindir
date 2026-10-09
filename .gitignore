@@ -1,0 +1,19 @@
+# Python
+.venv/
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Medya İndirmeleri (Geçici)
+downloads/
+
+# Streamlit
+.streamlit/secrets.toml
+
+# Yerel binary ve derleme çıktıları (GitHub 100MB sınırını aşmaması için)
+bin/
+build/
+dist/
+*.exe
+*.zip
+*.spec
