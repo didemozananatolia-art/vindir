@@ -95,8 +95,14 @@ def get_video_info(url: str) -> Dict[str, Any]:
         'no_warnings': True,
         'extract_flat': False,
         'source_address': '0.0.0.0',
+        'nocheckcertificate': True,
         'js_runtimes': {'node': {}, 'deno': {}, 'quickjs': {}},
         'remote_components': ['ejs:github'],
+        'extractor_args': {
+            'youtube': {
+                'player_client': ['android'],
+            }
+        },
     }
     if ffmpeg_dir:
         ydl_opts['ffmpeg_location'] = ffmpeg_dir
@@ -276,6 +282,11 @@ def download_media(
     ydl_opts['js_runtimes'] = {'node': {}, 'deno': {}, 'quickjs': {}}
     ydl_opts['remote_components'] = ['ejs:github']
     ydl_opts['nocheckcertificate'] = True
+    ydl_opts['extractor_args'] = {
+        'youtube': {
+            'player_client': ['android'],
+        }
+    }
 
     # Section / Range Download Handling
     has_cut = False
